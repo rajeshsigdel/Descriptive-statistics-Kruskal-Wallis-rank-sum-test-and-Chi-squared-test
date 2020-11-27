@@ -1,0 +1,452 @@
+---
+title: "Analysis of Pilot Study Data"
+author: "Rajesh Sigdel"
+date: "11/14/2020"
+output: word_document
+---
+
+
+The Pilot Study was conducted by Raj and Greg on October 23 and 24, 2020. 
+
+# Importing data
+We need to import the dataset first. The dataset can be downloaded from [here](https://drive.google.com/file/d/1JoFpbJSQZwklf41dkDsJufUL0Gd-l6mn/view). (If using windows, press “control” button and [click here](https://drive.google.com/file/d/1JoFpbJSQZwklf41dkDsJufUL0Gd-l6mn/view) it will open in your default browser)
+
+
+```{r, warning = F, message = F}
+library(readxl)
+
+LathamPark <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                   sheet = "LathamPark")
+
+
+LakeDanielPark <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                         sheet = "LakeDanielPark")
+
+Auduban <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                             sheet = "Auduban")
+```
+
+
+# Installing packages 
+
+```{r, warning = F, message = F}
+# install.packages("tidyverse")
+library(tidyverse)
+# install.packages("devtools")
+# devtools::install_github("thomasp85/patchwork")
+library(patchwork)
+# install.packages("gdata")
+library(gdata)
+# install.packages("flextable")
+library(flextable)
+```
+
+
+We are now converting all the Null Values into zeros using a function
+
+```{r}
+hybrd.ifelse <- function(x) {
+  mutate_all(x, ~ifelse(is.na(.), 0, .)) 
+}
+
+```
+
+Now, applying the function into our dataframe
+
+```{r}
+LathamPark <- hybrd.ifelse(LathamPark)
+Auduban <- hybrd.ifelse(Auduban)
+LakeDanielPark <- hybrd.ifelse(LakeDanielPark)
+```
+
+\
+
+## The formula to calculate Volume is: 
+
+\
+
+```{r}
+Volume_Calc <- function(dataframe, 
+                   Zone1, Zone2, Zone3, Zone4, PieceD) {
+  length <-  (Zone1 + Zone2 + Zone3+ Zone4)
+  diameter_m <- (PieceD/100) # Converting diameter into meter
+  radius <- diameter_m/2     # Radius = d/2
+  volume <- (length*pi*(radius^2))  # L*pi*r^2
+  a <- cbind(dataframe, length, diameter_m, radius, volume)
+}
+```
+
+
+Applying the function into our dataframe
+
+
+```{r}
+LathamPark <- Volume_Calc(LathamPark, LathamPark$Zone1, LathamPark$Zone2, 
+         LathamPark$Zone3, LathamPark$Zone4, LathamPark$PieceD)
+
+
+
+Auduban <- Volume_Calc(Auduban, Auduban$Zone1, Auduban$Zone2, 
+                         Auduban$Zone3, Auduban$Zone4, Auduban$PieceD)
+
+LakeDanielPark <- Volume_Calc(LakeDanielPark, LakeDanielPark$Zone1, 
+                                LakeDanielPark$Zone2, 
+                                LakeDanielPark$Zone3, LakeDanielPark$Zone4, 
+                                LakeDanielPark$PieceD)
+```
+
+Selecting our volume column
+```{r, message = F, warning = F}
+Auduban_V <- mutate (Auduban, "Auduban Volume" = volume) %>% 
+  select("Auduban Volume")
+LakeDanielPark_V <- mutate(LakeDanielPark, "Lake Daniel Park volume" = volume) %>% 
+  select("Lake Daniel Park volume")
+LathamPark_V <- mutate(LathamPark, "Latham Park volume" = volume) %>% 
+  select("Latham Park volume")
+```
+
+
+```{r}
+Volume <- gdata::cbindX(LakeDanielPark_V, Auduban_V,
+       LathamPark_V)
+```
+
+
+```{r}
+Volume <- pivot_longer(Volume, c("Lake Daniel Park volume", "Latham Park volume", 
+                       "Auduban Volume" ), names_to = "Field",
+             values_to = "Volume") %>% drop_na()
+
+```
+
+```{r}
+ggplot(Volume, aes(x = Field, y = Volume))+
+  geom_boxplot()+
+  theme_bw()+
+  annotate(geom="text", x=1.3, y=6.5, label="Very Large tree",
+           color="red")
+```
+
+```{r}
+Volume_hist<- function(dataframe, Site){
+  a <- filter(dataframe, Field == Site)
+  b <- ggplot(a, aes(x = Volume, fill= Site))+
+    geom_histogram()+
+    labs (x = Site)+
+    theme_bw()+
+    theme(legend.position = "none")
+}
+```
+
+
+
+
+
+```{r}
+Auduban_V_ggplot <- Volume_hist(Volume, "Auduban Volume")
+LathamPark_V_ggplot <- Volume_hist(Volume, "Latham Park volume")
+LakeDanielPark_V_ggplot <- Volume_hist(Volume, "Lake Daniel Park volume")
+
+```
+
+
+
+```{r}
+All_site_hist <- 
+  ggplot(Volume, aes(x = Volume, fill = Volume))+
+  geom_histogram()+
+  labs (x = "All sites")+
+  theme_bw()+
+  theme(legend.position = "none")
+```
+
+
+```{r, message = F, warning = F}
+(Auduban_V_ggplot | LathamPark_V_ggplot) / 
+  (LakeDanielPark_V_ggplot | All_site_hist)
+```
+
+The average, median and standard deviation of wood volume in Lake Daniel
+
+```{r}
+mean(LakeDanielPark$volume)
+sd(LakeDanielPark$volume)
+median(LakeDanielPark$volume)
+```
+
+
+
+The average, median and standard deviation of wood volume in Audubon
+
+```{r}
+mean(Auduban$volume)
+sd(Auduban$volume)
+median(Auduban$volume)
+```
+
+
+
+The average, median and standard deviation of wood volume in Latham Park
+
+```{r}
+
+mean(LathamPark$volume)
+sd(LathamPark$volume)
+median(LathamPark$volume)
+```
+
+
+```{r}
+a <- Volume %>% 
+  group_by(Field) %>%
+  summarise(
+    "Volume Per 100 meters"  = (sum(Volume))/2,  # Per 100 meter
+    mean = mean(Volume, na.rm = TRUE),
+    sd = sd(Volume, na.rm = TRUE),
+    median = median(Volume, na.rm = TRUE),
+    IQR = IQR(Volume, na.rm = TRUE))
+```
+
+
+```{r}
+a <- flextable(a)
+autofit(a, add_w = 0.001, add_h = 0.1)
+```
+
+
+Jams are excluded in volume calculation because the Washington Survey Guide did not include diameter and length to be calculated for Jams)
+
+
+# Kruskal Wallis test
+
+Kruskal Wallis test is a non - parametric test alternative to ANOVA. This methos is useful for testing whether sample originates from the same population. The reasons for the test:
+•	Volume is a continious data unlike total count of wood logs
+•	The dataset is not normal (very skewed data)
+
+```{r}
+boxplot(Volume~Field, data = Volume)
+```
+
+The result of Kurskal Wallis test is:
+
+```{r}
+kruskal.test(Volume ~ Field, data = Volume)
+```
+
+There is no statistically significant between volume of individual pieces of Lake Daniel, Lake Latham Park and Auduban Preserve.
+
+---
+
+# Frequency of Large wood per 100 meters
+
+```{r}
+Field <- c("Latham Park", "Lake Daniel" , "Auduban")
+
+Values <- c(33, 25, 60)
+
+Pieces <- data.frame(Field, Values)
+
+Pieces$Per100 <- Values/2
+
+ggplot(data = Pieces, aes(x = Field, y = Per100))+
+  geom_col(width = 0.5)+
+  theme_bw()+
+  ylab("Pieces per 100 meters")+
+  xlab("")
+
+```
+
+
+Ho: p1 = p2= p3
+Ha: At least one of the site is different from other
+
+```{r}
+data <- Pieces$Per100
+chisq.test(data)
+```
+The difference in the frequency of Large Wood is statistically significant
+
+---
+
+
+# Channel Orientation
+
+```{r}
+
+
+
+CountLP <- LathamPark %>% group_by(`Channel Orient`) %>% count(name = "LathamPark") 
+CountAu <- Auduban %>% group_by(`Channel Orient`) %>% count(name = "Auduban")
+CountLD <- LakeDanielPark %>% group_by(`Channel Orient`) %>% count(name = "LakeDanielPark")
+
+
+
+
+
+a <- CountLP %>% right_join(CountAu) %>% right_join(CountLD)
+
+
+flextable::flextable(a)
+
+
+```
+
+
+
+---
+
+# Degradation Class
+
+```{r}
+mean(Auduban$`Piece Decay`)
+
+sd(Auduban$`Piece Decay`)
+
+mean(LathamPark$`Piece Decay`)
+
+sd(LathamPark$`Piece Decay`)
+
+mean(LakeDanielPark$`Piece Decay`)
+
+sd(LakeDanielPark$`Piece Decay`)
+
+
+```
+
+
+---
+
+# Jams
+
+```{r}
+
+Sites <- c("Auduban Preserve", "Latham Park", "Lake Daniel Park")
+`No. of Jams` <- c(2, 1, 0)
+
+data.frame(Sites, `No. of Jams`)
+
+```
+
+
+---
+
+To find the actual length, we need to add all four zones together. The four zones are: zone 1, zone 2, zone 3, and zone 4. We can use a function to perform the task
+
+
+
+
+```{r, message = F, warning = F}
+library(readxl)
+
+LathamPark <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                   sheet = "LathamPark")
+
+
+LakeDanielPark <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                         sheet = "LakeDanielPark")
+
+Auduban <- read_excel("D:/Pilot_Study/Data.xlsx", 
+                             sheet = "Auduban")
+
+LathamPark <- hybrd.ifelse(LathamPark)
+Auduban <- hybrd.ifelse(Auduban)
+LakeDanielPark <- hybrd.ifelse(LakeDanielPark)
+
+
+LathamPark <- Volume_Calc(LathamPark, LathamPark$Zone1, LathamPark$Zone2, 
+         LathamPark$Zone3, LathamPark$Zone4, LathamPark$PieceD)
+
+
+
+Auduban <- Volume_Calc(Auduban, Auduban$Zone1, Auduban$Zone2, 
+                         Auduban$Zone3, Auduban$Zone4, Auduban$PieceD)
+
+LakeDanielPark <- Volume_Calc(LakeDanielPark, LakeDanielPark$Zone1, 
+                                LakeDanielPark$Zone2, 
+                                LakeDanielPark$Zone3, LakeDanielPark$Zone4, 
+                                LakeDanielPark$PieceD)
+
+
+```
+
+Selecting our Length column
+```{r, message = F, warning = F}
+Auduban_Length <- mutate (Auduban, "Auduban length" = length) %>% 
+  select("Auduban length")
+LakeDanielPark_Lenght <- mutate(LakeDanielPark, "Lake Daniel Park length" = length) %>% 
+  select("Lake Daniel Park length")
+LathamPark_Length <- mutate(LathamPark, "Latham Park length" = length) %>% 
+  select("Latham Park length")
+```
+
+
+
+```{r}
+Length <- gdata::cbindX(Auduban_Length, LakeDanielPark_Lenght,
+       LathamPark_Length)
+```
+
+```{r}
+Length <- pivot_longer(Length, c("Lake Daniel Park length", "Latham Park length", 
+                       "Auduban length" ), names_to = "Field",
+             values_to = "length") %>% drop_na()
+```
+
+# Perforning Kruskal Wallis Test on Length 
+
+
+```{r}
+ggplot(data = Length, aes(Field, y = length))+
+  geom_boxplot()+
+  theme_bw()
+```
+
+
+```{r}
+kruskal.test(length ~ Field, data = Length)
+```
+
+# Performing Kurskal Wallis Test on Diameter
+
+```{r}
+Auduban_Diameter <- Auduban %>% 
+  select(diameter_m) %>% 
+  rename(diameter_Audobon = diameter_m)
+
+LakeDanielPark_Diameter <- LakeDanielPark %>% 
+  select(diameter_m) %>% 
+  rename(diameter_LakeDanielPark = diameter_m)
+
+
+LathamPark_Diameter <- LathamPark %>% 
+  select(diameter_m) %>% 
+  rename(diamater_LathamPark = diameter_m)
+```
+
+
+```{r}
+Diameter <- gdata::cbindX(Auduban_Diameter, LakeDanielPark_Diameter,
+       LathamPark_Diameter)
+```
+
+
+```{r}
+Diameter <- pivot_longer(Diameter, c("diameter_Audobon", "diameter_LakeDanielPark", 
+                       "diamater_LathamPark" ), names_to = "Field",
+             values_to = "diameter") %>% drop_na()
+```
+
+
+```{r}
+ggplot(data = Diameter, aes(x = diameter, fill = "red"))+
+  geom_histogram()+
+  theme_bw()+
+  theme(legend.position = "none")+
+  facet_wrap(~Field)
+```
+
+
+```{r}
+kruskal.test(diameter ~ Field, data = Diameter)
+```
+
