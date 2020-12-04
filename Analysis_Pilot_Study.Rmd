@@ -2,11 +2,22 @@
 title: "Analysis of Pilot Study Data"
 author: "Rajesh Sigdel"
 date: "11/14/2020"
-output: word_document
+output:
+  html_document:
+    df_print: paged
 ---
 
+This is the analysis of Pilot conducted of woody debris at North Buffalo Creek at Greensboro on October 23 and 24, 2020. Three different reaches (sites) of the creek were selected: Latham Park, Audubon Preserve, and Lake Daniel Park.m (see map) Two hundred meters of each reach was surveyed by following Washington State Large Woody Debris Surveys Protocol. Following metrics were evaluated.
 
-The Pilot Study was conducted by Raj and Greg on October 23 and 24, 2020. 
+* What is the frequency of woody in each site?
+* Is the frequency of Lage wood statistically significant?
+* What is the volume of Large Wood in each site?
+* Are the volumes large Woods of each site significantly different from each other?
+* Is the length of Large Wood of each site significantly different from each other?
+* Is the length of Large Wood of each site significantly different from each other?
+
+
+
 
 # Importing data
 We need to import the dataset first. The dataset can be downloaded from [here](https://drive.google.com/file/d/1JoFpbJSQZwklf41dkDsJufUL0Gd-l6mn/view). (If using windows, press “control” button and [click here](https://drive.google.com/file/d/1JoFpbJSQZwklf41dkDsJufUL0Gd-l6mn/view) it will open in your default browser)
@@ -39,7 +50,27 @@ library(patchwork)
 library(gdata)
 # install.packages("flextable")
 library(flextable)
+#install.packages("leaflet")
+library(leaflet)
 ```
+
+
+## Map of the Study site
+
+```{r}
+library(readxl)
+data <- read_excel("Data_for_map.xlsx")
+
+
+
+
+m <- leaflet() %>% 
+  addTiles() %>% 
+  addMarkers( data = data, lng = ~Long, lat = ~lat, 
+              popup = ~ Name)
+m
+```
+
 
 
 We are now converting all the Null Values into zeros using a function
@@ -450,3 +481,14 @@ ggplot(data = Diameter, aes(x = diameter, fill = "red"))+
 kruskal.test(diameter ~ Field, data = Diameter)
 ```
 
+
+Feel free to contact me if you have any questions
+
+Thanks
+
+\
+\
+\
+    
+  
+  
