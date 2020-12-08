@@ -1,17 +1,17 @@
 ---
 title: "Analysis of Pilot Study Data"
+runningheader: "Survey data of North Buffalo Creek" # only for pdf output
+subtitle: "R tutorial" # only for html output
 author: "Rajesh Sigdel"
-date: "12/07/2020"
+date: "`r Sys.Date()`"
 output:
-  html_document:
-    df_print: paged
-    theme: tufte
+  tufte::tufte_html: default
 ---
 
 \
 
 
-This publication features an analysis of data collected during a pilot study of large wood (< 1 m in length and <10 cm diameter) at Greensboro’s North Buffalo Creek on October 23 and 24, 2020. Three different reaches (sites) of the creek were selected and studied: Latham Park, Audubon Preserve, and Lake Daniel Park (see map). Two hundred meters of each reach was surveyed by following Washington State Large Woody Debris Survey Protocol. Metrics were evaluated based on the following questions:
+This publication features an analysis of data collected during a pilot study of dead large wood (< 1 m in length and <10 cm diameter) at Greensboro’s North Buffalo Creek on October 23 and 24, 2020. Three different reaches (sites) of the creek were selected and studied: Latham Park, Audubon Preserve, and Lake Daniel Park (see map). Two hundred meters of each reach was surveyed by following Washington State Large Woody Debris Survey Protocol. Metrics were evaluated based on the following questions:
 
 * What is the frequency of wood at each site?
 
@@ -506,8 +506,3 @@ Thanks
 </div>
 
 \
-\
-\
-    
-  
-  
